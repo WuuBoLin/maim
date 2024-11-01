@@ -70,7 +70,7 @@ glm::ivec4 getWindowGeometry( X11* x11, Window win ) {
         unsigned int width = attr.width;           
         unsigned int height = attr.height;         
         // We combine both border widths.
-        unsigned int border = attr.border_width;   
+        unsigned int border = getenv("MAIM_NO_BORDER") ? 0 : attr.border_width;
         int x, y;
         // Gotta translate them into root coords, we can adjust for the border width here.
         Window junk;

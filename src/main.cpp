@@ -33,6 +33,7 @@ public:
     bool help;
     bool savepathGiven;
     bool captureBackground;
+    bool noBorder;
 };
 
 MaimOptions::MaimOptions() {
@@ -51,6 +52,7 @@ MaimOptions::MaimOptions() {
     windowGiven = false;
     formatGiven = false;
     captureBackground = false;
+    noBorder = false;
 }
 
 Window parseWindow( std::string win, X11* x11 ) {
@@ -181,6 +183,10 @@ MaimOptions* getMaimOptions( cxxopts::Options& options, X11* x11 ) {
     }
     if ( options.count( "format" ) > 0 ) {
         foo->quiet = options["quiet"].as<bool>();
+    }
+    if ( options.count( "noborder" ) > 0 ) {
+	setenv("MAIM_NO_BORDER", "1", 1);
+	foo->noBorder = true;
     }
     foo->formatGiven = options.count("format") > 0;
     if ( foo->formatGiven ) {
@@ -336,6 +342,9 @@ OPTIONS
               beneath the specified window. This parameter overrides this and
               also captures elements underneath the window.
 
+       -e, --noborder
+              Remove window borders in the captured image.
+
 SLOP OPTIONS
        -b, --bordersize=FLOAT
               Sets the selection rectangle's thickness.
@@ -430,6 +439,7 @@ int app( int argc, char** argv ) {
     ("l,highlight", "Instead of outlining a selection, maim will highlight it instead. This is particularly useful if the color is set to an opacity lower than 1.")
     ("q,quiet", "Disable any unnecessary cerr output. Any warnings or info simply won't print.")
     ("k,nokeyboard", "Disables the ability to cancel selections with the keyboard.")
+    ("e,noborder", "Remove window borders in the captured image.")
     ("o,noopengl", "Disables graphics hardware acceleration.")
     ("positional", "Positional parameters", cxxopts::value<std::vector<std::string>>())
     ;
