@@ -11,6 +11,7 @@
 #include "cxxopts.hpp"
 #include "x.hpp"
 #include "image.hpp"
+#include "globals.hpp"
 
 class MaimOptions {
 public:
@@ -185,8 +186,9 @@ MaimOptions* getMaimOptions( cxxopts::Options& options, X11* x11 ) {
         foo->quiet = options["quiet"].as<bool>();
     }
     if ( options.count( "noborder" ) > 0 ) {
-	setenv("MAIM_NO_BORDER", "1", 1);
-	foo->noBorder = true;
+	g_noBorder = true;
+	g_shrinkSize = options["noborder"].as<int>();
+	foo->noBorder = options["noborder"].as<int>();
     }
     foo->formatGiven = options.count("format") > 0;
     if ( foo->formatGiven ) {
@@ -342,8 +344,12 @@ OPTIONS
               beneath the specified window. This parameter overrides this and
               also captures elements underneath the window.
 
-       -e, --noborder
-              Remove window borders in the captured image.
+       -e, --noborder=INT
+              Remove window borders in the captured image. If provided with a number,
+              removes that many pixels from each edge when border detection fails.
+              For example: --noborder=1 will try to detect and remove borders
+              automatically, but if that fails, it will remove 1 pixel from each
+              edge instead.
 
 SLOP OPTIONS
        -b, --bordersize=FLOAT
@@ -439,7 +445,7 @@ int app( int argc, char** argv ) {
     ("l,highlight", "Instead of outlining a selection, maim will highlight it instead. This is particularly useful if the color is set to an opacity lower than 1.")
     ("q,quiet", "Disable any unnecessary cerr output. Any warnings or info simply won't print.")
     ("k,nokeyboard", "Disables the ability to cancel selections with the keyboard.")
-    ("e,noborder", "Remove window borders in the captured image.")
+    ("e,noborder", "Remove window borders in the captured image. Optional pixel size to remove if detection fails.", cxxopts::value<int>()->implicit_value("0"))
     ("o,noopengl", "Disables graphics hardware acceleration.")
     ("positional", "Positional parameters", cxxopts::value<std::vector<std::string>>())
     ;
@@ -570,6 +576,13 @@ int app( int argc, char** argv ) {
     glm::ivec2 imageloc;
     // Snapshot the image
     XImage* image = x11->getImage( selection.id, px, py, selection.w, selection.h, imageloc);
+
+    if (g_noBorder) {
+        px += g_shrinkSize;
+        py += g_shrinkSize;
+        selection.w -= g_shrinkSize*2;
+        selection.h -= g_shrinkSize*2;
+    }
 
     int num_channels;
     if ( maimOptions->format == "png" || maimOptions->format == "webp" ) {

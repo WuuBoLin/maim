@@ -16,6 +16,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin/")
 set( source
      src/x.cpp
      src/image.cpp
+     src/globals.cpp
      src/main.cpp )
 
 set( BIN_TARGET     "${PROJECT_NAME}" )
