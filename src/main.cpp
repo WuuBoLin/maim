@@ -23,6 +23,7 @@ public:
     glm::vec4 geometry;
     float delay;
     int quality;
+    int shrink;
     bool select;
     bool hideCursor;
     bool geometryGiven;
@@ -42,6 +43,7 @@ MaimOptions::MaimOptions() {
     window = None;
     parent = None;
     quality = 7;
+    shrink = 0;
     quiet = false;
     delay = 0;
     format = "png";
@@ -186,9 +188,10 @@ MaimOptions* getMaimOptions( cxxopts::Options& options, X11* x11 ) {
         foo->quiet = options["quiet"].as<bool>();
     }
     if ( options.count( "noborder" ) > 0 ) {
-	g_noBorder = true;
-	g_shrinkSize = options["noborder"].as<int>();
-	foo->noBorder = options["noborder"].as<int>();
+	foo->noBorder = options["noborder"].as<bool>();
+    }
+    if ( options.count( "shrink" ) > 0 ) {
+	foo->shrink = options["shrink"].as<int>();
     }
     foo->formatGiven = options.count("format") > 0;
     if ( foo->formatGiven ) {
@@ -344,12 +347,20 @@ OPTIONS
               beneath the specified window. This parameter overrides this and
               also captures elements underneath the window.
 
-       -e, --noborder=INT
-              Remove window borders in the captured image. If provided with a number,
-              removes that many pixels from each edge when border detection fails.
-              For example: --noborder=1 will try to detect and remove borders
-              automatically, but if that fails, it will remove 1 pixel from each
-              edge instead.
+       -e, --noborder
+              Removes window borders in the captured image. This may not work
+              when used with --capturebackground or --select flags due to its
+              reliance on the root X window attributes. This option is useful
+              when you want to capture only the content of a window without
+              its decorations.
+
+       -z, --shrink=INT
+              Shrinks the captured area by the specified number of pixels from
+              each side (left, right, top, bottom). Each edge is moved inward by
+              the specified number of pixels, effectively reducing the total
+              width and height by twice the value. For example, -z 10 will
+              shrink 10 pixels from each edge, reducing total width and height
+              by 20 pixels. When used without a value, defaults to 0.
 
 SLOP OPTIONS
        -b, --bordersize=FLOAT
@@ -445,7 +456,8 @@ int app( int argc, char** argv ) {
     ("l,highlight", "Instead of outlining a selection, maim will highlight it instead. This is particularly useful if the color is set to an opacity lower than 1.")
     ("q,quiet", "Disable any unnecessary cerr output. Any warnings or info simply won't print.")
     ("k,nokeyboard", "Disables the ability to cancel selections with the keyboard.")
-    ("e,noborder", "Remove window borders in the captured image. Optional pixel size to remove if detection fails.", cxxopts::value<int>()->implicit_value("0"))
+    ("e,noborder", "Remove window borders in the captured image.")
+    ("z,shrink", "Shrinks the captured area by the specified number of pixels from each side.", cxxopts::value<int>()->implicit_value("0"))
     ("o,noopengl", "Disables graphics hardware acceleration.")
     ("positional", "Positional parameters", cxxopts::value<std::vector<std::string>>())
     ;
@@ -476,6 +488,8 @@ int app( int argc, char** argv ) {
         std::cout << "Run maim --help for more information." << std::endl;
         return 0;
     }
+
+    g_noBorder = maimOptions->noBorder;
 
     if ( maimOptions->select ) {
         if ( maimOptions->windowGiven || maimOptions->parentGiven || maimOptions->geometryGiven ) {
@@ -574,11 +588,11 @@ int app( int argc, char** argv ) {
     Window junk;
     XTranslateCoordinates( x11->display, maimOptions->parent, x11->root, (int)selection.x, (int)selection.y, &px, &py, &junk);
 
-    if (g_noBorder) {
-        px += g_shrinkSize;
-        py += g_shrinkSize;
-        selection.w -= g_shrinkSize*2;
-        selection.h -= g_shrinkSize*2;
+    if (maimOptions->shrink) {
+        px += maimOptions->shrink;
+        py += maimOptions->shrink;
+        selection.w -= maimOptions->shrink*2;
+        selection.h -= maimOptions->shrink*2;
     }
 
     glm::ivec2 imageloc;
