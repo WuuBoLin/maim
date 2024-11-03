@@ -573,9 +573,6 @@ int app( int argc, char** argv ) {
     int px, py;
     Window junk;
     XTranslateCoordinates( x11->display, maimOptions->parent, x11->root, (int)selection.x, (int)selection.y, &px, &py, &junk);
-    glm::ivec2 imageloc;
-    // Snapshot the image
-    XImage* image = x11->getImage( selection.id, px, py, selection.w, selection.h, imageloc);
 
     if (g_noBorder) {
         px += g_shrinkSize;
@@ -583,6 +580,10 @@ int app( int argc, char** argv ) {
         selection.w -= g_shrinkSize*2;
         selection.h -= g_shrinkSize*2;
     }
+
+    glm::ivec2 imageloc;
+    // Snapshot the image
+    XImage* image = x11->getImage( selection.id, px, py, selection.w, selection.h, imageloc);
 
     int num_channels;
     if ( maimOptions->format == "png" || maimOptions->format == "webp" ) {
