@@ -1,6 +1,6 @@
-cmake_minimum_required( VERSION 3.1.3 )
+cmake_minimum_required( VERSION 3.5.0 )
 
-project(maim VERSION 5.8.0 LANGUAGES CXX)
+project(maim VERSION 5.8.1 LANGUAGES CXX)
 
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     set(CMAKE_INSTALL_PREFIX "/usr" CACHE PATH "..." FORCE)
@@ -65,7 +65,7 @@ target_link_libraries( ${BIN_TARGET}
                        ${XRANDR_LIBRARY}
                        ${JPEG_LIBRARIES}
                        ${XRENDER_LIBRARY}
-                       ${SLOP_LIBRARIES}
+                       ${SLOP_LIBRARY}
                        ${WEBP_LIBRARY} )
 
 if( ${CMAKE_VERSION} VERSION_LESS 3.7 )
